@@ -1,11 +1,8 @@
-module raashid/raashid-redis
+module github.com/raashidanwar/sredis-cli
 
 go 1.20
 
-require (
-	github.com/urfave/cli v1.22.14
-	github.com/urfave/cli/v2 v2.25.7
-)
+require github.com/urfave/cli/v2 v2.25.7
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect

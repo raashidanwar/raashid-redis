@@ -1,16 +1,29 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
-	"sync"
 
 	"github.com/urfave/cli/v2"
 )
 
-var store = map[string]string{}
-var wg sync.WaitGroup
+var config Config
+
+func loadConfiguration() {
+	configFile, err := os.Open("config.json")
+	defer configFile.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	jsonParser := json.NewDecoder(configFile)
+	jsonParser.Decode(&config)
+}
 
 func commands() {
 	for len(os.Args) != 0 {
@@ -26,7 +39,16 @@ func commands() {
 						}
 						key := cCtx.Args().Get(0)
 						value := cCtx.Args().Get(1)
-						store[key] = value
+						setUrl := "http://localhost:8080/" + "set?key=" + key + "&value=" + value
+						fmt.Println(setUrl)
+						values := map[string]string{}
+						json_data, err := json.Marshal(values)
+						res, err := http.Post(setUrl, "application/json", bytes.NewBuffer(json_data))
+						if err != nil {
+							fmt.Printf("error making http request: %s\n", err)
+							os.Exit(1)
+						}
+						log.Println(res.Body)
 						fmt.Printf("set %s to %s\n", key, value)
 						return nil
 					},
@@ -40,11 +62,14 @@ func commands() {
 							return fmt.Errorf("expected 1 argument {key}")
 						}
 						key := cCtx.Args().Get(0)
-						value, err := store[key]
-						if !err {
-							return fmt.Errorf("key %s not found", key)
+						getUrl := "http://localhost:8080/" + "get?key=" + key
+						res, err := http.Get(getUrl)
+						resBody, err := ioutil.ReadAll(res.Body)
+						if err != nil {
+							fmt.Printf("error making http request: %s\n", err)
+							os.Exit(1)
 						}
-						fmt.Printf("%s\n", value)
+						fmt.Printf("%s\n", resBody)
 						return nil
 					},
 				},
@@ -56,6 +81,10 @@ func commands() {
 		}
 		os.Args = []string{}
 	}
+}
+
+func init() {
+	loadConfiguration()
 }
 
 func main() {
