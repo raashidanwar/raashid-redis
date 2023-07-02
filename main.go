@@ -39,8 +39,7 @@ func commands() {
 						}
 						key := cCtx.Args().Get(0)
 						value := cCtx.Args().Get(1)
-						setUrl := "http://localhost:8080/" + "set?key=" + key + "&value=" + value
-						fmt.Println(setUrl)
+						setUrl := config.REDIS_SEVER_URL + "set?key=" + key + "&value=" + value
 						values := map[string]string{}
 						json_data, err := json.Marshal(values)
 						res, err := http.Post(setUrl, "application/json", bytes.NewBuffer(json_data))
@@ -48,8 +47,8 @@ func commands() {
 							fmt.Printf("error making http request: %s\n", err)
 							os.Exit(1)
 						}
-						log.Println(res.Body)
-						fmt.Printf("set %s to %s\n", key, value)
+						resBody, err := ioutil.ReadAll(res.Body)
+						fmt.Printf("%s\n", resBody)
 						return nil
 					},
 				},
@@ -62,7 +61,7 @@ func commands() {
 							return fmt.Errorf("expected 1 argument {key}")
 						}
 						key := cCtx.Args().Get(0)
-						getUrl := "http://localhost:8080/" + "get?key=" + key
+						getUrl := config.REDIS_SEVER_URL + "get?key=" + key
 						res, err := http.Get(getUrl)
 						resBody, err := ioutil.ReadAll(res.Body)
 						if err != nil {
